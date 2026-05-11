@@ -1,0 +1,27 @@
+{
+  "cli": {
+    "version": ">= 14.0.0"
+  },
+  "build": {
+    "production": {
+      "env": {
+        "EXPO_PUBLIC_API_BASE_URL": "https://addx.onrender.com/api",
+        "EXPO_PUBLIC_AUTH_BRIDGE_URL": "https://addx.onrender.com"
+      }
+    },
+    "preview": {
+      "distribution": "internal",
+      "env": {
+        "EXPO_PUBLIC_API_BASE_URL": "https://addx.onrender.com/api",
+        "EXPO_PUBLIC_AUTH_BRIDGE_URL": "https://addx.onrender.com"
+      }
+    },
+    "development": {
+      "developmentClient": true,
+      "distribution": "internal"
+    }
+  },
+  "submit": {
+    "production": {}
+  }
+}
