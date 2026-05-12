@@ -1,10 +1,10 @@
-# Builds a debug APK with production API URLs (Render) and uploads it as a workflow artifact.
+# Debug APK (icon + adaptive icon from app.json → assets/). Artifact name: addX, file: addX.apk
 #
-# Required repository secrets (Settings → Secrets and variables → Actions):
-#   EXPO_PUBLIC_SUPABASE_URL
-#   EXPO_PUBLIC_SUPABASE_ANON_KEY
+# Runs on: push to main (matching paths), any PR into main (path filter), or manual run.
 #
-# API base + auth bridge are set below (same as eas.json production). LLM stays on the Node backend only.
+# Required repository secrets:
+#   EXPO_PUBLIC_SUPABASE_URL, EXPO_PUBLIC_SUPABASE_ANON_KEY
+# Fork PRs: secrets are not passed — workflow will fail until you use a branch on this repo.
 
 name: Android APK (artifact)
 
@@ -21,13 +21,25 @@ on:
       - 'babel.config.js'
       - 'index.js'
       - '.github/workflows/android-apk.yml'
+  pull_request:
+    branches: [main]
+    types: [opened, synchronize, reopened]
+    paths:
+      - 'src/**'
+      - 'assets/**'
+      - 'app.json'
+      - 'package.json'
+      - 'package-lock.json'
+      - 'babel.config.js'
+      - 'index.js'
+      - '.github/workflows/android-apk.yml'
 
 permissions:
   contents: read
   actions: write
 
 concurrency:
-  group: android-apk-${{ github.workflow }}-${{ github.ref }}
+  group: android-apk-${{ github.workflow }}-${{ github.event.pull_request.number || github.ref }}
   cancel-in-progress: true
 
 jobs:
@@ -50,7 +62,7 @@ jobs:
       - name: Validate Supabase secrets
         run: |
           if [ -z "$EXPO_PUBLIC_SUPABASE_URL" ] || [ -z "$EXPO_PUBLIC_SUPABASE_ANON_KEY" ]; then
-            echo '::error::Add Actions secrets EXPO_PUBLIC_SUPABASE_URL and EXPO_PUBLIC_SUPABASE_ANON_KEY (Settings → Secrets and variables → Actions).'
+            echo '::error::Add Actions secrets EXPO_PUBLIC_SUPABASE_URL and EXPO_PUBLIC_SUPABASE_ANON_KEY (Settings → Secrets and variables → Actions). Fork PRs cannot use repo secrets.'
             exit 1
           fi
 
@@ -93,24 +105,24 @@ jobs:
           chmod +x gradlew
           ./gradlew --no-daemon assembleDebug
 
-      - name: Rename APK (clear filename in artifact)
-        run: cp android/app/build/outputs/apk/debug/app-debug.apk "addx-debug-${{ github.run_number }}.apk"
+      - name: Package addX.apk for artifact
+        run: cp android/app/build/outputs/apk/debug/app-debug.apk addX.apk
 
       - uses: actions/upload-artifact@v4
         with:
-          name: addx-android-debug-${{ github.run_number }}
-          path: addx-debug-${{ github.run_number }}.apk
+          name: addX
+          path: addX.apk
           if-no-files-found: error
           retention-days: 30
 
       - name: Job summary
         run: |
+          PR="${{ github.event.pull_request.number }}"
           {
-            echo '### AddX Android APK'
+            echo '### addX Android APK'
             echo ''
-            echo 'Artifact **addx-android-debug-${{ github.run_number }}** contains \`addx-debug-${{ github.run_number }}.apk\` (debug-signed; API → Render production).'
+            echo 'Artifact **addX** (ZIP) contains **addX.apk** — same app icon as \`assets/icon.png\` / adaptive icon in \`app.json\`.'
             echo ''
-            echo 'Install: download the artifact ZIP from this run, unzip, then \`adb install -r addx-debug-${{ github.run_number }}.apk\`.'
-            echo ''
-            echo 'For a **release**-signed APK (Play Store), use EAS Build or add signing steps to this workflow.'
+            if [ -n "$PR" ]; then echo "PR: #$PR"; echo ''; fi
+            echo 'Install: Actions → this run → Artifacts → **addX** → unzip → \`adb install -r addX.apk\`'
           } >> "$GITHUB_STEP_SUMMARY"

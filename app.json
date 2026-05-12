@@ -17,7 +17,9 @@
       "supportsTablet": true,
       "bundleIdentifier": "com.addx.app",
       "infoPlist": {
-        "UIBackgroundModes": ["audio"]
+        "UIBackgroundModes": [
+          "audio"
+        ]
       }
     },
     "android": {
@@ -34,6 +36,11 @@
     "plugins": [
       "expo-font",
       "expo-web-browser"
-    ]
+    ],
+    "extra": {
+      "eas": {
+        "projectId": "bde1def3-465d-47c2-9579-2af4ee86bbec"
+      }
+    }
   }
 }
