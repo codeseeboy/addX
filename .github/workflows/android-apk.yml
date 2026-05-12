@@ -1,4 +1,5 @@
-# Debug APK (icon + adaptive icon from app.json → assets/). Artifact name: addX, file: addX.apk
+# Release APK with embedded JS bundle (Expo export:embed). Debug builds skip bundling and need Metro — that caused "Unable to load script".
+# Artifact: addX → addX.apk. Icons from app.json / assets/.
 #
 # Runs on: push to main (matching paths), any PR into main (path filter), or manual run.
 #
@@ -44,7 +45,7 @@ concurrency:
 
 jobs:
   build:
-    name: prebuild + assembleDebug
+    name: prebuild + assembleRelease
     runs-on: ubuntu-latest
     timeout-minutes: 60
     env:
@@ -99,14 +100,25 @@ jobs:
       - name: Generate Android project (Expo prebuild)
         run: npx expo prebuild --platform android
 
-      - name: Build debug APK
+      # Default Gradle template signs release with signingConfigs.debug; store file may be missing on CI.
+      - name: Ensure android/app/debug.keystore
+        run: |
+          if [ ! -f android/app/debug.keystore ]; then
+            keytool -genkeypair -v -noprompt \
+              -keystore android/app/debug.keystore \
+              -storepass android -alias androiddebugkey -keypass android \
+              -keyalg RSA -keysize 2048 -validity 10000 \
+              -dname "CN=Android Debug,O=Android,C=US"
+          fi
+
+      - name: Build release APK (embeds JS; works offline)
         working-directory: android
         run: |
           chmod +x gradlew
-          ./gradlew --no-daemon assembleDebug
+          ./gradlew --no-daemon assembleRelease
 
       - name: Package addX.apk for artifact
-        run: cp android/app/build/outputs/apk/debug/app-debug.apk addX.apk
+        run: cp android/app/build/outputs/apk/release/app-release.apk addX.apk
 
       - uses: actions/upload-artifact@v4
         with:
@@ -121,7 +133,7 @@ jobs:
           {
             echo '### addX Android APK'
             echo ''
-            echo 'Artifact **addX** (ZIP) contains **addX.apk** — same app icon as \`assets/icon.png\` / adaptive icon in \`app.json\`.'
+            echo 'Artifact **addX** (ZIP) contains **addX.apk** (release build, JS embedded; works without Metro). Icons from \`app.json\` / \`assets/\`.'
             echo ''
             if [ -n "$PR" ]; then echo "PR: #$PR"; echo ''; fi
             echo 'Install: Actions → this run → Artifacts → **addX** → unzip → \`adb install -r addX.apk\`'
