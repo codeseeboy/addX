@@ -19,7 +19,7 @@ import { useStore } from '../hooks/useStore';
  * After ~1.6s, routes to Onboarding (or MainTabs if already authed).
  */
 export default function SplashScreen({ navigation }) {
-  const { authed, hasOnboarded } = useStore();
+  const { authed, authReady, hasOnboarded } = useStore();
 
   const logoScale = useSharedValue(0.6);
   const logoOpacity = useSharedValue(0);
@@ -39,16 +39,18 @@ export default function SplashScreen({ navigation }) {
 
     labelOpacity.value = withDelay(420, withTiming(1, { duration: 500 }));
 
+    if (!authReady) return undefined;
+
     const t = setTimeout(() => {
-      const next = !authed
-        ? hasOnboarded
+      const next = authed
+        ? 'MainTabs'
+        : hasOnboarded
           ? 'Login'
-          : 'Onboarding'
-        : 'MainTabs';
+          : 'Onboarding';
       navigation.replace(next);
     }, 1700);
     return () => clearTimeout(t);
-  }, [authed, hasOnboarded, navigation, logoOpacity, logoScale, ringOpacity, ringScale, labelOpacity]);
+  }, [authReady, authed, hasOnboarded, navigation, logoOpacity, logoScale, ringOpacity, ringScale, labelOpacity]);
 
   const logoStyle = useAnimatedStyle(() => ({
     opacity: logoOpacity.value,

@@ -84,6 +84,8 @@ export function AppStateProvider({ children }) {
   const [checklist, setChecklist] = useState(mockSetupChecklist);
   const [activity, setActivity] = useState([]);
   const [authed, setAuthed] = useState(false);
+  /** False until persisted Supabase session is read (avoids flash to Login). */
+  const [authReady, setAuthReady] = useState(!hasSupabaseConfig);
   const [hasOnboarded, setHasOnboarded] = useState(false);
   const [hasWelcomed, setHasWelcomed] = useState(false);
   const bootstrapDone = useRef(false);
@@ -307,15 +309,28 @@ export function AppStateProvider({ children }) {
   }, []);
 
   useEffect(() => {
-    if (!hasSupabaseConfig) return;
+    if (!hasSupabaseConfig) {
+      setAuthReady(true);
+      return;
+    }
 
     if (bootstrapDone.current) return;
     bootstrapDone.current = true;
 
+    let cancelled = false;
+    const finishBootstrap = () => {
+      if (!cancelled) setAuthReady(true);
+    };
+
+    const runLoad = () =>
+      loadFromSupabase()
+        .catch(() => {})
+        .finally(finishBootstrap);
+
     Linking.getInitialURL()
       .then((url) => (url ? handleIncomingAuthUrl(url) : null))
-      .then(() => loadFromSupabase())
-      .catch(() => {});
+      .then(runLoad)
+      .catch(runLoad);
 
     const sub = Linking.addEventListener('url', ({ url }) => {
       handleIncomingAuthUrl(url)
@@ -323,11 +338,14 @@ export function AppStateProvider({ children }) {
         .catch(() => {});
     });
 
-    const { data: authSub } = supabase.auth.onAuthStateChange(() => {
-      loadFromSupabase().catch(() => {});
+    const { data: authSub } = supabase.auth.onAuthStateChange((event) => {
+      if (event === 'INITIAL_SESSION' || event === 'SIGNED_IN' || event === 'SIGNED_OUT' || event === 'TOKEN_REFRESHED') {
+        loadFromSupabase().catch(() => {});
+      }
     });
 
     return () => {
+      cancelled = true;
       sub?.remove?.();
       authSub?.subscription?.unsubscribe?.();
     };
@@ -342,6 +360,7 @@ export function AppStateProvider({ children }) {
       checklist,
       activity,
       authed,
+      authReady,
       hasOnboarded,
       hasWelcomed,
       updateStore,
@@ -360,7 +379,7 @@ export function AppStateProvider({ children }) {
     }),
     [
       store, ads, stats, settings, checklist, activity,
-      authed, hasOnboarded, hasWelcomed,
+      authed, authReady, hasOnboarded, hasWelcomed,
       updateStore, updateSettings, addAd, updateAd,
       removeAd, toggleAdStatus, completeChecklist,
       prependPlaybackActivity, loadFromSupabase,

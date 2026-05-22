@@ -1,3 +1,5 @@
+import { Platform } from 'react-native';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 import { createClient } from '@supabase/supabase-js';
 import { getPublicEnv } from './env';
 
@@ -9,8 +11,12 @@ export { hasSupabaseConfig };
 const resolvedUrl = hasSupabaseConfig ? supabaseUrl : 'https://placeholder.local';
 const resolvedAnonKey = hasSupabaseConfig ? supabaseAnonKey : 'placeholder-anon-key';
 
+/** Native: AsyncStorage so login survives app restarts. Web: default localStorage. */
+const authStorage = Platform.OS === 'web' ? undefined : AsyncStorage;
+
 export const supabase = createClient(resolvedUrl, resolvedAnonKey, {
   auth: {
+    storage: authStorage,
     persistSession: true,
     autoRefreshToken: true,
     detectSessionInUrl: false, // handled manually via Linking callback

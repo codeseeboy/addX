@@ -28,6 +28,7 @@ import Animated, {
 
 import { colors, radius, spacing, typography, shadows } from '../theme';
 import { useStore } from '../hooks/useStore';
+import { supabase } from '../lib/supabase';
 import PressableScale from '../components/PressableScale';
 
 export default function ProfileScreen({ navigation }) {
@@ -105,8 +106,13 @@ export default function ProfileScreen({ navigation }) {
       {confirmingLogout && (
         <ConfirmSheet
           onCancel={() => setConfirmingLogout(false)}
-          onConfirm={() => {
+          onConfirm={async () => {
             setConfirmingLogout(false);
+            try {
+              await supabase.auth.signOut();
+            } catch {
+              /* still leave app login screen */
+            }
             setAuthed(false);
             navigation.getParent()?.replace('Login');
           }}

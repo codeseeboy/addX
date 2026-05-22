@@ -14,7 +14,7 @@ import { sendMagicLink } from '../lib/supabaseFunctions';
 
 const STATE = { IDLE: 'idle', SENDING: 'sending', SENT: 'sent' };
 
-/** If user types `emp` without @, Supabase email becomes `emp@addx.dev` (create that user in Supabase Auth → Users). */
+/** Short usernames → email@addx.dev (users: emp, azim — `npm run seed:users`). */
 function loginEmailFromInput(raw) {
   const t = String(raw || '').trim().toLowerCase();
   if (!t) return '';
@@ -26,7 +26,7 @@ export default function LoginScreen({ navigation }) {
   const insets = useSafeAreaInsets();
   const inputRef = useRef(null);
   const [email, setEmail] = useState(__DEV__ ? 'emp' : '');
-  const [password, setPassword] = useState(__DEV__ ? 'emp' : '');
+  const [password, setPassword] = useState(__DEV__ ? 'emp123' : '');
   const [state, setState] = useState(STATE.IDLE);
   const [passwordLoggingIn, setPasswordLoggingIn] = useState(false);
 
@@ -121,7 +121,7 @@ export default function LoginScreen({ navigation }) {
         toast.show('Type your email first', { variant: 'warn' });
         inputRef.current?.focus();
       } else {
-        toast.show("Magic link needs a full email (with @). Use Log in for emp / emp.", { variant: 'warn' });
+        toast.show('Magic link needs a full email (with @). Use Log in for emp or azim.', { variant: 'warn' });
       }
       return;
     }
@@ -154,7 +154,9 @@ export default function LoginScreen({ navigation }) {
 
           <Text style={styles.headline}>Sign in to your store</Text>
           <Text style={styles.subhead}>
-            Password login keeps you signed in on this device (Supabase session). Magic link still available below.
+            Log in once — your session stays on this device until you sign out. Users{' '}
+            <Text style={styles.devMono}>emp</Text> / <Text style={styles.devMono}>azim</Text> (passwords{' '}
+            <Text style={styles.devMono}>emp123</Text>, <Text style={styles.devMono}>azim123</Text>).
           </Text>
 
           <View style={styles.inputWrap}>
@@ -164,7 +166,7 @@ export default function LoginScreen({ navigation }) {
               value={email}
               onChangeText={setEmail}
               onSubmitEditing={handlePasswordLogin}
-              placeholder="emp or you@store.com"
+              placeholder="emp, azim, or you@store.com"
               placeholderTextColor={colors.textTertiary}
               keyboardType="email-address"
               autoCapitalize="none"
@@ -212,9 +214,9 @@ export default function LoginScreen({ navigation }) {
 
           {__DEV__ ? (
             <Text style={styles.devHint}>
-              Dev default: user <Text style={styles.devMono}>emp</Text> → email{' '}
-              <Text style={styles.devMono}>emp@addx.dev</Text>, password <Text style={styles.devMono}>emp</Text>. Add
-              this user in Supabase Auth once; then no magic link needed.
+              Dev: <Text style={styles.devMono}>emp</Text> / <Text style={styles.devMono}>emp123</Text>,{' '}
+              <Text style={styles.devMono}>azim</Text> / <Text style={styles.devMono}>azim123</Text>. Run{' '}
+              <Text style={styles.devMono}>npm run seed:users</Text> once to create both in Supabase.
             </Text>
           ) : null}
 
