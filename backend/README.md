@@ -10,7 +10,7 @@ npm run dev
 
 Uses **nodemon** to restart on `src/**` file changes (see `nodemon.json`).
 
-Server runs on `http://localhost:4000`.
+Server runs on `http://localhost:<PORT>` (`PORT` in `.env`, default **8787**).
 
 Every HTTP request is logged to the terminal as:
 
@@ -26,6 +26,8 @@ Copy `.env.example` to `.env` and fill:
 - `SUPABASE_SERVICE_ROLE_KEY` — **required** for OpenAI TTS uploads to Storage (server-only; never in the Expo app).
 - `OPENAI_API_KEY` — **required** for `POST /api/ai/generate-voice` (TTS MP3).
 - `LLM_GATEWAY_URL` — base URL of `web_llm_api_backend` (default `http://127.0.0.1:8000`). Run that project with `python run.py` and add provider keys in its `.env`.
+  - **Render / production:** set this to the **public HTTPS** URL of the deployed LLM service (no trailing slash), e.g. `https://your-llm-service.onrender.com`. If it is missing or left as `localhost`, script generation will fail. Open `GET /api/health` and check `llmGatewayHost` and `llmGatewayMisconfiguredForCloud` (must be `false` on the server).
+  - **502 / cold start:** Render free tiers can wake slowly; the backend retries transient 502/503/504 (see `LLM_GATEWAY_MAX_RETRIES`, `LLM_GATEWAY_RETRY_DELAY_MS` in env if you need to tune).
 - `JAMENDO_CLIENT_ID` — **required** for `GET /api/music/jamendo/playlist` (legal streaming preview URLs).
 - `SUPABASE_AD_AUDIO_BUCKET` — optional; default `ad-audio` (create bucket via `supabase/storage_ad_audio.sql`).
 - `AUTH_DEEP_LINK` (optional) — native redirect after `/auth/open` (default `addx://auth/callback`; Expo Go may need `exp://…`)

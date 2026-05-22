@@ -2,7 +2,7 @@ import { Platform } from 'react-native';
 import { appLog } from './devLog';
 import { getDevBackendHttpBase } from './devBackendHost';
 
-const backendPort = process.env.EXPO_PUBLIC_DEV_BACKEND_PORT || '5050';
+const backendPort = process.env.EXPO_PUBLIC_DEV_BACKEND_PORT || '8787';
 
 function getDefaultBaseUrl() {
   if (Platform.OS === 'android') {

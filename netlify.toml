@@ -1,0 +1,18 @@
+# Netlify: connect this repo, set "Base directory" to `addx` (or deploy only from addx folder).
+# Build produces static files; SPA fallback keeps client-side routes working.
+
+[build]
+  command = "npm ci && npm run export:web"
+  publish = "web-dist"
+
+[build.environment]
+  NODE_VERSION = "20"
+
+# Same env as production APK (set in Netlify UI → Site settings → Environment variables):
+# EXPO_PUBLIC_SUPABASE_URL, EXPO_PUBLIC_SUPABASE_ANON_KEY,
+# EXPO_PUBLIC_API_BASE_URL, EXPO_PUBLIC_AUTH_BRIDGE_URL
+
+[[redirects]]
+  from = "/*"
+  to = "/index.html"
+  status = 200

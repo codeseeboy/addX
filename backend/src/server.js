@@ -12,9 +12,23 @@ import { fetchJamendoTracks } from './services/jamendo.js';
 import { synthesizeAdSpeechMp3 } from './services/ttsPipeline.js';
 
 const app = express();
-const port = Number(process.env.PORT || 4000);
+/** Dev default avoids 5050 (often busy: other tools, Hyper-V / reserved ranges on Windows). Override with PORT=. */
+const DEFAULT_PORT = 8787;
+const port = Number(process.env.PORT || DEFAULT_PORT);
 
 const llmGatewayBaseUrl = (process.env.LLM_GATEWAY_URL || 'http://127.0.0.1:8000').replace(/\/$/, '');
+
+function llmGatewayHealthMeta() {
+  try {
+    const u = new URL(llmGatewayBaseUrl);
+    const host = u.hostname || '';
+    const isLocal =
+      host === 'localhost' || host === '127.0.0.1' || host === '::1' || host === '0.0.0.0';
+    return { llmGatewayHost: host || null, llmGatewayMisconfiguredForCloud: isLocal };
+  } catch {
+    return { llmGatewayHost: null, llmGatewayMisconfiguredForCloud: true };
+  }
+}
 const jamendoClientId = process.env.JAMENDO_CLIENT_ID || '';
 const supabaseServiceKey = process.env.SUPABASE_SERVICE_ROLE_KEY || '';
 const storageBucket = process.env.SUPABASE_AD_AUDIO_BUCKET || 'ad-audio';
@@ -99,6 +113,7 @@ const stripe = process.env.STRIPE_SECRET_KEY
   : null;
 
 app.get('/api/health', (_req, res) => {
+  const gw = llmGatewayHealthMeta();
   res.json({
     ok: true,
     service: 'addx-backend',
@@ -112,6 +127,9 @@ app.get('/api/health', (_req, res) => {
     hasTtsGoogleFallback: String(process.env.TTS_GOOGLE_FALLBACK || '1').toLowerCase() !== '0',
     hasStripe: Boolean(stripe),
     hasLlmGatewayUrl: Boolean(llmGatewayBaseUrl),
+    /** Where script generation calls (hostname only). On Render, must NOT be localhost — set LLM_GATEWAY_URL. */
+    llmGatewayHost: gw.llmGatewayHost,
+    llmGatewayMisconfiguredForCloud: gw.llmGatewayMisconfiguredForCloud,
     hasJamendo: Boolean(jamendoClientId),
   });
 });
@@ -303,7 +321,14 @@ server.on('error', (err) => {
     bindAttempts++;
     if (bindAttempts >= MAX_BIND_ATTEMPTS) {
       // eslint-disable-next-line no-console
-      console.error(`[AddX backend] Port ${port} still busy after ${MAX_BIND_ATTEMPTS} attempts — exiting. Kill the other process manually.`);
+      console.error(
+        `[AddX backend] Port ${port} still in use after ${MAX_BIND_ATTEMPTS} attempts — exiting.\n` +
+          '  Usually: another terminal already ran `npm run dev`, or a zombie node.exe, or another app bound this port.\n' +
+          '  Windows (PowerShell): Get-NetTCPConnection -LocalPort ' +
+          port +
+          ' | Select-Object -Property LocalPort,OwningProcess,State\n' +
+          '  Then: Stop-Process -Id <OwningProcess> -Force   (or change PORT in backend/.env)',
+      );
       process.exit(1);
     }
     // eslint-disable-next-line no-console

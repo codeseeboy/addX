@@ -1,0 +1,4 @@
+# Source upload only; build runs `npm ci` + `export:web` on Vercel.
+web-dist
+.expo
+backend/node_modules

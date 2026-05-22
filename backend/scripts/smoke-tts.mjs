@@ -5,7 +5,7 @@
 import fs from 'node:fs';
 import path from 'node:path';
 
-const base = process.env.SMOKE_API_BASE || 'http://127.0.0.1:5050';
+const base = process.env.SMOKE_API_BASE || 'http://127.0.0.1:8787';
 const outPath = path.join(process.cwd(), 'test-addx-voice-output.mp3');
 
 async function main() {
