@@ -1,6 +1,13 @@
-# AddX — Advertisement Expert
+# 🔊 AddX — AI In-Store Audio Ads
 
-AI-powered in-store audio for retail and gas stations. Type a promotion → AddX rewrites it as a polished script, voices it, and mixes it with background music throughout the day.
+> AI-powered in-store audio for retail and gas stations. Type a promotion → AddX rewrites it into a polished script, voices it, and mixes it with background music to play throughout the day. Built for a US retail client (CStoreExpert).
+
+![React Native](https://img.shields.io/badge/React%20Native-61DAFB?style=flat-square&logo=react&logoColor=black)
+![Expo](https://img.shields.io/badge/Expo-000020?style=flat-square&logo=expo&logoColor=white)
+![JavaScript](https://img.shields.io/badge/JavaScript-F7DF1E?style=flat-square&logo=javascript&logoColor=black)
+![Supabase](https://img.shields.io/badge/Supabase-3FCF8E?style=flat-square&logo=supabase&logoColor=white)
+
+> The LLM service that generates the ad scripts (multi-provider routing + fallback) lives in a companion repo: [llm-backend](https://github.com/codeseeboy/llm-backend).
 
 This repository contains the **native mobile app** (iOS + Android) built with Expo + React Native. UI is final-quality. Backend / LLM / TTS / Stripe are stubbed with clearly marked `TODO: INTEGRATE …` hooks.
 
@@ -127,3 +134,7 @@ Tokens live in `src/theme/`. Don't introduce raw hex values or pixel constants i
 - **Voice TTS** — `dummyGenerateAdVoice` returns a fake `mock://` URL.
 - **Stripe Checkout** — opens a toast; integrate `expo-web-browser` + checkout session flow.
 - **Persistence** — state is in-memory via React Context. Add `expo-secure-store` / `MMKV` when auth ships.
+
+---
+
+Built by **Shashikant Rajput** — [LinkedIn](https://www.linkedin.com/in/shashikant-rajput) · [Portfolio](https://ezzshashi.netlify.app)
